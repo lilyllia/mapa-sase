@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Interativo SASE - Cariri</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alegreya Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    
+    <!-- PapaParse para ler os CSVs robustamente via Vanilla JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+    /* ================================
+    ANIMAÇÃO: SPINNER DE CARREGAMENTO
+    ================================ */
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(74, 20, 140, 0.2); /* Fundo sutil */
+        border-left-color: #4A148C; /* Roxo SASE */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px auto;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    #loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 50vh; /* Centraliza na tela */
+        font-weight: 700;
+        font-size: 20px;
+        color: #4A148C;
+    }
+
+    /* ==================================================
+       TEMA SASE - APRESENTAÇÃO (ROXO, LARANJA E CREME)
+       ================================================== */
+    body {
+        font-family: 'Montserrat', sans-serif;
+        /* Aplica o background da imagem fornecida */
+        background-image: url('background.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed; /* O fundo não rola junto com a tela */
+        margin: 0;
+        padding: 10px 20px; /* Reduzido para caber melhor na tela */
+        color: #1e293b;
+        height: 100vh;
+        box-sizing: border-box;
+    }
+
+    .header {
+        font-weight: 800;
+        font-size: 32px;
+        max-width: 1050px;
+        margin: 0 auto 10px; /* Margem inferior reduzida */
+        padding: 15px 0;
+        text-align: center;
+        color: #4A148C; /* Roxo SASE do PDF */
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 1px 1px 3px rgba(255,255,255,0.7); /* Destaca o título no fundo */
+    }
+
+    .dashboard-container {
+        display: flex;
+        position: relative;
+        max-width: 1050px; /* Diminuído para caber 100% na altura da tela */
+        margin: 0 auto;
+        gap: 30px; /* Espaço menor entre mapa e card */
+        align-items: flex-start;
+    }
+
+    /* Seção do Mapa */
+    .map-section {
+        flex: 1;
+        border-radius: 16px; /* Borda mais arredondada */
+        box-shadow: 0 8px 24px rgba(74, 20, 140, 0.15); /* Sombra roxa suave */
+        padding: 15px 0px; /* Reduzido */
+        /* Fundo translúcido para integrar com o background do PDF */
+        background-color: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(4px);
+        z-index: 2; 
+    }
+
+    svg#mapa-cariri {
+        width: 100%;
+        max-height: 480px; /* Limita a altura máxima para não esconder a legenda */
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* Efeitos no mapa (Hover e Clique) */
+    .municipio-alvo {
+        transition: fill 0.3s ease, stroke-width 0.3s ease, filter 0.3s;
+    }
+
+    .cidade-ativa:hover {
+        filter: brightness(0.9);
+        stroke: #4A148C;
+        stroke-width: 2px;
+    }
+
+    .cidade-selecionada {
+        filter: brightness(0.85);
+        stroke: #f97316; /* Laranja da apresentação para seleção */
+        stroke-width: 2.5px;
+    }
+
+    /* Coluna Direita (Painel) */
+    .right-column {
+        width: 350px; /* Um pouco mais estreito */
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+    }
+
+    .panel-section {
+        background-color: rgba(255, 255, 255, 0.95);
+        border: 3px solid #e2e8f0;
+        border-top: 5px solid #4A148C;
+        border-radius: 12px;
+        padding: 25px 15px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+        /* ANIMAÇÃO DO CARD */
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(20px); /* Começa levemente para a direita */
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Curva de aceleração super suave */
+    }
+
+    /* Classe ativadora do card via JS */
+    .panel-section.show-panel {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0); /* Desliza para o lugar original */
+    }
+
+    .panel-title {
+        font-weight: 800;
+        font-size: 24px; /* Levemente menor */
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        text-align: center;
+        color: #1e293b;
+    }
+
+    #pie-chart-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    /* Gráfico 3D Hover */
+    .slice-group {
+        cursor: pointer;
+    }
+    .slice-group path, .slice-group circle {
+        transition: filter 0.2s ease; 
+    }
+    .slice-group:hover path, .slice-group:hover circle {
+        filter: brightness(1.15); 
+    }
+
+    /* ================================
+       BADGES DE INDICADORES
+       ================================ */
+    .badges-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px; /* Menos espaço entre badges */
+        justify-content: center;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 9999px;
+        font-size: 10px; /* Menor para caber mais */
+        font-weight: 700;
+        color: white;
+        cursor: help;
+        position: relative;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .badge-amarelo { background-color: #f59e0b; color: #fff; } /* Amarelo mais próximo do laranja do PDF */
+    .badge-vermelho { background-color: #ef4444; }
+    .badge-vermelho-escuro { background-color: #7f1d1d; }
+
+    /* Tooltip Flutuante (Badges) */
+    .badge::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4A148C; /* Roxo SASE */
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        white-space: pre-wrap;
+        width: max-content;
+        max-width: 200px;
+        text-transform: none;
+        letter-spacing: normal;
+        font-weight: 500;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, bottom 0.2s;
+        pointer-events: none;
+        z-index: 100;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        text-align: center;
+        line-height: 1.4;
+    }
+
+    .badge:hover::after {
+        opacity: 1;
+        visibility: visible;
+        bottom: 115%;
+    }
+
+    /* Tooltip Flutuante (Gráfico que segue o mouse) */
+    .chart-tooltip {
+        position: fixed; 
+        background-color: #4A148C; /* Integrado com a cor do tema */
+        color: white;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        pointer-events: none; 
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease;
+        box-shadow: 0 6px 12px rgba(74, 20, 140, 0.3);
+        text-align: center;
+        white-space: pre-wrap; 
+        line-height: 1.4;
+    }
+
+    /* Linha Conectora */
+    .line-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; 
+        z-index: 5; 
+        overflow: visible;
+    }
+
+    .dynamic-line {
+        stroke: #f97316; /* Laranja ligando a cidade ao card */
+        stroke-width: 2.5px;
+        stroke-dasharray: 6 4;
+        display: none;
+    }
+
+    /* Legenda Inferior do Mapa */
+    .map-legend {
+        margin-top: 15px; /* Reduzido fortemente */
+        padding-top: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px; /* Reduzido para encaixar sem descer a tela */
+        justify-content: center;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        padding: 4px 12px 4px 4px;
+        border-radius: 999px; 
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .legend-item span {
+        font-size: 9.5px; /* Reduzido para caber bem num projetor */
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+    }
+    .legend-icon-wrapper {
+        width: 26px; /* Ícone menor */
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white; 
+    }
+    .legend-icon-wrapper i {
+        font-size: 15px;
+    }
+
+    #loading {
+        font-weight: 700;
+        font-size: 20px;
+        text-align: center;
+        padding: 50px;
+        color: #4A148C;
+    }
+</style>
+</head>
+<body>
+
+    <div class="header">MAPA INTERATIVO SASE</div>
+    
+    <div id="loading">
+        <div class="spinner"></div>
+        Baixando dados e processando planilhas...
+    </div>
+
+    <div class="dashboard-container" id="dashboard-container" style="display: none;">
+        
+        <svg class="line-overlay" id="overlay-svg">
+            <defs>
+                <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4">
+                    <circle cx="5" cy="5" r="5" fill="#4A148C" />
+                </marker>
+            </defs>
+            <line id="dynamic-line" class="dynamic-line" marker-end="url(#dot)" marker-start="url(#dot)"></line>
+        </svg>
+
+        <div id="chart-tooltip" class="chart-tooltip"></div>
+
+        <div class="map-section">
+            <div id="map-container">
+                <!-- é aqui que ficaria o svg enorme -->
+            </div>
+            
+            <div class="map-legend" id="map-legend"></div>
+        </div>
+
+        <div class="right-column">
+            <div class="panel-section" id="info-panel">
+                <h2 class="panel-title" id="panel-title">MUNICÍPIO</h2>
+                <div class="badges-container" id="badges-container"></div>
+                <div id="pie-chart-container"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DICIONÁRIOS E REGRAS DE NEGÓCIO
+        // ==========================================
+        const coresEixos = {
+            'educacao para a emancipacao': '#ea580c', 
+            'patrimonio cultural historico e natural': '#4d7c0f', 
+            'saude coletiva': '#8b5cf6', // Roxo SASE
+            'popularizacao da ciencia': '#1d4ed8', 
+            'desenvolvimento agrario': '#78350f', 
+            'meio ambiente e mudanca climatica': '#86efac', 
+            'busca ativa': '#9ca3af',
+            'primeira infancia e sistema de garantia de direitos': '#eab308', 
+            'recomposicao das aprendizagens': '#a78bfa',
+            'saude na escola': '#06b6d4', 
+            'equipamentos intersetoriais de convivencia comunitaria': '#f472b6',
+            'seguranca e protecao no ambiente escolar': '#fb923c',
+            'educacao de jovens e adultos eja de idosos e erradicacao do analfabetismo': '#ec4899', 
+            'politicas de educacao integral em tempo integral': '#fef08a' 
+        };
+
+        const iconesEixos = {
+            'educacao para a emancipacao': 'ti-book',
+            'patrimonio cultural historico e natural': 'ti-building-monument',
+            'saude coletiva': 'ti-heartbeat',
+            'popularizacao da ciencia': 'ti-flask',
+            'desenvolvimento agrario': 'ti-tractor',
+            'meio ambiente e mudanca climatica': 'ti-leaf',
+            'busca ativa': 'ti-search',
+            'primeira infancia e sistema de garantia de direitos': 'ti-mood-kid',
+            'recomposicao das aprendizagens': 'ti-pencil-plus',
+            'saude na escola': 'ti-first-aid-kit',
+            'equipamentos intersetoriais de convivencia comunitaria': 'ti-users-group',
+            'seguranca e protecao no ambiente escolar': 'ti-shield-lock',
+            'educacao de jovens e adultos eja de idosos e erradicacao do analfabetismo': 'ti-school',
+            'politicas de educacao integral em tempo integral': 'ti-clock'
+        };
+
+        const nomesAmigaveisEixos = {
+            'educacao para a emancipacao': 'Educação p/ Emancipação',
+            'patrimonio cultural historico e natural': 'Patrimônio e Cultura',
+            'saude coletiva': 'Saúde Coletiva',
+            'popularizacao da ciencia': 'Pop. da Ciência',
+            'desenvolvimento agrario': 'Desenv. Agrário',
+            'meio ambiente e mudanca climatica': 'Meio Ambiente',
+            'busca ativa': 'Busca Ativa',
+            'primeira infancia e sistema de garantia de direitos': 'Primeira Infância e Direitos',
+            'recomposicao das aprendizagens': 'Recomposição de Aprendizagem',
+            'saude na escola': 'Saúde na Escola',
+            'equipamentos intersetoriais de convivencia comunitaria': 'Equip. de Convivência',
+            'seguranca e protecao no ambiente escolar': 'Segurança Escolar',
+            'educacao de jovens e adultos eja de idosos e erradicacao do analfabetismo': 'EJA e Alfabetização',
+            'politicas de educacao integral em tempo integral': 'Educação Integral'
+        };
+
+        const eixosParaIndicadores = {
+            "educacao para a emancipacao": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
+            "patrimonio cultural historico e natural": ['idhm'],
+            "saude coletiva": ['idhm', 'idhm_longevidade', 'ima_class'],
+            "popularizacao da ciencia": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
+            "desenvolvimento agrario": ['idhm', 'idhm_renda', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema'],
+            "meio ambiente e mudanca climatica": ['idhm', 'ima_class', 'idhm_longevidade'],
+            "busca ativa": [],
+            "primeira infancia e sistema de garantia de direitos": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
+            "recomposicao das aprendizagens": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
+            "saude na escola": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
+            "educacao de jovens e adultos eja de idosos e erradicacao do analfabetismo": ['idhm_educacao', 'ima_class', 'idhm_renda', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema'],
+            "politicas de educacao integral em tempo integral": []
+        };
+
+        const indConfigs = {
+            'desemprego': { titulo: 'Desemprego', desc: 'Pop. ativa sem ocupação (%) (Censo 2010)' },
+            'idhm': { titulo: 'IDHM', desc: 'Índice de Desen. Humano Municipal (2010)' },
+            'idhm_renda': { titulo: 'IDHM Renda', desc: 'IDHM Renda (2010)' },
+            'idhm_educacao': { titulo: 'IDHM Educação', desc: 'IDHM Educação (2010)' },
+            'idhm_longevidade': { titulo: 'IDHM Longevidade', desc: 'IDHM Longevidade (2010)' },
+            'ideb_ai': { titulo: 'IDEB Anos Iniciais', desc: 'IDEB - AI (2023)' },
+            'ideb_af': { titulo: 'IDEB Anos Finais', desc: 'IDEB - AF (2023)' },
+            'vul_a_pobreza': { titulo: 'Vuln. Econômica', desc: 'Vulneráveis à pobreza (%) (2010)' },
+            'pobreza': { titulo: 'Pobreza', desc: 'Pobres (%) (2022)' },
+            'pobreza_extrema': { titulo: 'Pobreza Extr.', desc: 'Extremamente pobres (%) (2022)' },
+            'ima_class': { titulo: 'IMA', desc: 'Índice Municipal de Alerta (IPECE 2025)' }
+        };
+
+        const estadoSiglas = {
+            'ceará': 'CE'
+        };
+
+        let selectedCityId = null;
+        let mapDataAgregada = {};
+
+        // ==========================================
+        // 2. FUNÇÕES AUXILIARES DE NORMALIZAÇÃO
+        // ==========================================
+        function normalizarString(str) {
+            if (!str) return '';
+            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[,.();:]/g, "").trim().replace(/\s+/g, " ");
+        }
+
+        // Exatamente como gerado no script Python do mapa SVG
+        function formatarIdCidadeSvg(nome, estado) {
+            let n = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            n = n.replace(/[^a-zA-Z0-9]+/g, "_").replace(/_+$/, "").replace(/^_+/, "");
+            return `${n}_${estado}`;
+        }
+
+        function parseNumberBr(val) {
+            if (!val) return 0;
+            return parseFloat(val.toString().replace('%', '').replace(',', '.').trim()) || 0;
+        }
+
+        // ==========================================
+        // 3. MATEMÁTICA DOS INDICADORES E BADGES
+        // ==========================================
+        function calcularCorBadge(chave, valor, strClassIma = null) {
+            if (chave === 'ima_class') {
+                const c = (strClassIma || '').toLowerCase();
+                if (c.includes('média-alta') || c.includes('media-alta')) return 'badge-vermelho';
+                if (c.includes('alta')) return 'badge-vermelho-escuro';
+                return 'badge-amarelo'; 
+            }
+            if (typeof valor !== 'number' || isNaN(valor)) return 'badge-amarelo';
+            switch(chave) {
+                case 'desemprego': return valor < 5 ? 'badge-amarelo' : (valor < 8 ? 'badge-vermelho' : 'badge-vermelho-escuro');
+                case 'idhm': case 'idhm_renda': case 'idhm_educacao': case 'idhm_longevidade':
+                    return valor > 0.65 ? 'badge-amarelo' : (valor > 0.60 ? 'badge-vermelho' : 'badge-vermelho-escuro');
+                case 'ideb_ai': return valor > 8 ? 'badge-amarelo' : (valor > 7 ? 'badge-vermelho' : 'badge-vermelho-escuro');
+                case 'ideb_af': return valor > 7.5 ? 'badge-amarelo' : (valor > 6.5 ? 'badge-vermelho' : 'badge-vermelho-escuro');
+                case 'vul_a_pobreza': case 'pobreza':
+                    return valor < 60 ? 'badge-amarelo' : (valor < 65 ? 'badge-vermelho' : 'badge-vermelho-escuro');
+                case 'pobreza_extrema':
+                    return valor < 30 ? 'badge-amarelo' : (valor < 40 ? 'badge-vermelho' : 'badge-vermelho-escuro');
+                default: return 'badge-amarelo';
+            }
+        }
+
+        function formatarExibicao(chave, valor) {
+            if (['desemprego', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema'].includes(chave)) return valor.toFixed(2).replace('.', ',') + '%';
+            if (chave.startsWith('idhm') || chave === 'ima') return valor.toFixed(3).replace('.', ',');
+            if (chave.startsWith('ideb')) return valor.toFixed(1).replace('.', ',');
+            return valor;
+        }
+
+        function renderizarBadges(cidadeData) {
+            const container = document.getElementById('badges-container');
+            container.innerHTML = '';
+            
+            let chavesSet = new Set();
+            
+            // indicadores agregados aos eixos
+            Object.keys(cidadeData.eixosAgregados).forEach(eixoStr => {
+                if (eixosParaIndicadores[eixoStr]) {
+                    eixosParaIndicadores[eixoStr].forEach(ind => chavesSet.add(ind));
+                }
+            });
+
+            chavesSet.forEach(chave => {
+                const valor = cidadeData.indicadores[chave];
+                if (valor === undefined || valor === null || valor === '') return;
+                
+                const badge = document.createElement('div');
+                badge.className = `badge ${calcularCorBadge(chave, valor, cidadeData.indicadores['ima_class'])}`;
+                badge.textContent = indConfigs[chave].titulo;
+                
+                let tooltip = `${formatarExibicao(chave, valor)}\n${indConfigs[chave].desc}`;
+                if (chave === 'ima_class') {
+                    tooltip = `Classificação: ${valor}\nValor IMA: ${formatarExibicao('ima', cidadeData.indicadores.ima)}\n${indConfigs[chave].desc}`;
+                }
+                
+                badge.setAttribute('data-tooltip', tooltip);
+                container.appendChild(badge);
+            });
+        }
+
+        // ==========================================
+        // 4. GRÁFICO DE PIZZA (SVG MATEMÁTICO PURO)
+        // ==========================================
+        function criarGraficoPizza(eixosData, totalDeProjetos) {
+            const total = Object.values(eixosData).reduce((a, b) => a + b, 0);
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            
+            svg.setAttribute("viewBox", "-160 -160 320 320"); 
+            svg.style.width = "300px";
+            svg.style.height = "300px";
+            svg.style.overflow = "visible";
+
+            let startAngle = -Math.PI / 2;
+            const raio = 78;
+            const strokeW = 27;
+            
+            const fatias = Object.entries(eixosData).map(([area, count]) => ({ area, count }));
+            const gapFisico = strokeW + 4;
+            const gapAngle = fatias.length > 1 ? gapFisico / raio : 0;
+            
+            let availableAngle = (2 * Math.PI) - (gapAngle * fatias.length);
+            if (availableAngle < 0) availableAngle = 0; 
+
+            fatias.forEach((fatia) => {
+                let drawAngle = (fatia.count / total) * availableAngle;
+                if (drawAngle <= 0.001) drawAngle = 0.001; 
+                const endAngle = startAngle + drawAngle;
+                const pathColor = coresEixos[fatia.area] || '#64748b';
+
+                const sliceGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                sliceGroup.setAttribute("class", "slice-group");
+                
+                const nomeAmigavel = nomesAmigaveisEixos[fatia.area] || fatia.area.toUpperCase();
+                sliceGroup.setAttribute("data-tooltip", `${nomeAmigavel}\n${fatia.count} ocorrência(s) em projetos`);
+
+                if (fatia.count === total && fatias.length === 1) {
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("r", raio);
+                    circle.setAttribute("fill", "none");
+                    circle.setAttribute("stroke", pathColor);
+                    circle.setAttribute("stroke-width", strokeW);
+                    sliceGroup.appendChild(circle);
+                } else {
+                    const x1 = raio * Math.cos(startAngle);
+                    const y1 = raio * Math.sin(startAngle);
+                    const x2 = raio * Math.cos(endAngle);
+                    const y2 = raio * Math.sin(endAngle);
+                    const largeArcFlag = drawAngle > Math.PI ? 1 : 0;
+                    
+                    const d = ["M", x1, y1, "A", raio, raio, 0, largeArcFlag, 1, x2, y2].join(" ");
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", d);
+                    path.setAttribute("fill", "none");
+                    path.setAttribute("stroke", pathColor);
+                    path.setAttribute("stroke-width", strokeW);
+                    path.setAttribute("stroke-linecap", "round"); 
+                    sliceGroup.appendChild(path);
+                }
+                
+                const midAngle = startAngle + (drawAngle / 2);
+                const baseR = raio + (strokeW / 2);
+                const hasIcon = iconesEixos[fatia.area];
+                
+                const distElemento = baseR + 36;
+                
+                if (hasIcon) {
+                    const imgSize = 24;
+                    const lxImg = distElemento * Math.cos(midAngle);
+                    const lyImg = distElemento * Math.sin(midAngle);
+
+                    const foreign = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+                    foreign.setAttribute("x", lxImg - imgSize / 2);
+                    // 3. Juntamos o Ícone e o Número (Ajuste nos eixos Y)
+                    foreign.setAttribute("y", lyImg - imgSize / 2 - 8); // Puxa o ícone mais pra baixo
+                    foreign.setAttribute("width", imgSize);
+                    foreign.setAttribute("height", imgSize);
+                    foreign.innerHTML = `<i class="ti ${iconesEixos[fatia.area]}" style="font-size: ${imgSize}px; color: ${pathColor}; display: block; text-align: center;"></i>`;
+                    sliceGroup.appendChild(foreign);
+                    
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", lxImg);
+                    text.setAttribute("y", lyImg + 12); // Puxa o texto mais pra cima
+                    text.setAttribute("fill", pathColor);
+                    text.setAttribute("font-size", "20");
+                    text.setAttribute("font-family", "Montserrat");
+                    text.setAttribute("font-weight", "700");
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("dominant-baseline", "central");
+                    text.textContent = fatia.count; 
+                    sliceGroup.appendChild(text);
+
+                } else {
+                    const lx = distElemento * Math.cos(midAngle);
+                    const ly = distElemento * Math.sin(midAngle);
+                    
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", lx);
+                    text.setAttribute("y", ly);
+                    text.setAttribute("fill", pathColor);
+                    text.setAttribute("font-size", "22");
+                    text.setAttribute("font-family", "Montserrat");
+                    text.setAttribute("font-weight", "700");
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("dominant-baseline", "central");
+                    text.textContent = fatia.count; 
+                    sliceGroup.appendChild(text);
+                }
+                
+                svg.appendChild(sliceGroup);
+                startAngle = endAngle + gapAngle; 
+            });
+            
+            // --- TEXTO CENTRAL TOTAL ---
+            const textTotal = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textTotal.setAttribute("x", "0");
+            textTotal.setAttribute("y", "-5");
+            textTotal.setAttribute("font-size", "28");
+            textTotal.setAttribute("font-family", "Montserrat");
+            textTotal.setAttribute("font-weight", "700");
+            textTotal.setAttribute("fill", "#1e293b");
+            textTotal.setAttribute("text-anchor", "middle");
+            textTotal.setAttribute("dominant-baseline", "central");
+            textTotal.textContent = totalDeProjetos;
+            svg.appendChild(textTotal);
+
+            const textTotalLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textTotalLabel.setAttribute("x", "0");
+            textTotalLabel.setAttribute("y", "20");
+            textTotalLabel.setAttribute("font-size", "11");
+            textTotalLabel.setAttribute("font-family", "Montserrat");
+            textTotalLabel.setAttribute("font-weight", "600");
+            textTotalLabel.setAttribute("fill", "#64748b");
+            textTotalLabel.setAttribute("text-anchor", "middle");
+            textTotalLabel.setAttribute("dominant-baseline", "central");
+            textTotalLabel.textContent = totalDeProjetos === 1 ? "PROJETO" : "PROJETOS";
+            svg.appendChild(textTotalLabel);
+
+            return svg;
+        }
+        // ==========================================
+        // 5. DOWNLOAD DOS DADOS E LIGAÇÃO (JOINS)
+        // ==========================================
+        const LINK_INDICADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRrICKzX1B24JlnMdgMRrX6FpMNuA0E58gj0RFBmH6EmCb--xqAl1armqucfXVAdzJQQ3x4OVWC-EQK/pub?gid=2081621981&single=true&output=csv';
+        const LINK_PROJETOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRZ9nok-C90ziQe0XrbSsEt497sl87Q5AijSFsknilRPRIiFRkhATGuk7bVLHOBI1KATeN0_z5148h2/pub?gid=286471846&single=true&output=csv';
+        const LINK_COMPILADO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQyMQ9edM-5tVfvLnH0ifGqgB9a6qX8H0ko69iDPGCfIomC0v9fIo5t8-wXB5te5ryMDT-KOMlfv3Sc/pub?gid=621770612&single=true&output=csv';
+        const LINK_MAPA_SVG = './mapa.svg';
+
+        async function inicializarDashboard() {
+            try {
+                const [resSvg, resInd, resProj, resComp] = await Promise.all([
+                    fetch(LINK_MAPA_SVG).then(r => r.text()),
+                    fetch(LINK_INDICADORES).then(r => r.text()),
+                    fetch(LINK_PROJETOS).then(r => r.text()),
+                    fetch(LINK_COMPILADO).then(r => r.text())
+                ]);
+
+                document.getElementById('map-container').innerHTML = resSvg;
+
+                const dataInd = Papa.parse(resInd, {header: false, skipEmptyLines: true}).data.slice(1);
+                const dataProj = Papa.parse(resProj, {header: false, skipEmptyLines: true}).data.slice(1);
+                const dataComp = Papa.parse(resComp, {header: false, skipEmptyLines: true}).data.slice(1);
+
+                // --- 5.1 Prepara Dicionário de Indicadores ---
+                let dictIndicadores = {};
+                dataInd.forEach(row => {
+                    if (row.length < 12 || !row[0]) return;
+                    const cidNorm = normalizarString(row[0]);
+                    dictIndicadores[cidNorm] = {
+                        desemprego: parseNumberBr(row[1]),
+                        idhm: parseNumberBr(row[2]),
+                        ideb_ai: parseNumberBr(row[3]),
+                        ideb_af: parseNumberBr(row[4]),
+                        vul_a_pobreza: parseNumberBr(row[5]),
+                        ima: parseNumberBr(row[6]),
+                        ima_class: row[7] ? row[7].trim() : "",
+                        pobreza: parseNumberBr(row[8]),
+                        pobreza_extrema: parseNumberBr(row[9]),
+                        idhm_renda: parseNumberBr(row[10]),
+                        idhm_educacao: parseNumberBr(row[11]),
+                        idhm_longevidade: parseNumberBr(row[12])
+                    };
+                });
+
+                // --- 5.2 Prepara Dicionário de Eixos por Projeto ---
+                let dictProjEixos = {};
+                dataProj.forEach(row => {
+                    // se a coluna do eixo não existir ou estiver vazia, ele ignora a linha!
+                    if (row.length < 2 || !row[0] || !row[1] || row[1].trim() === '') return; 
+                    
+                    const projNome = normalizarString(row[0]);
+                    const eixo = normalizarString(row[1]);
+                    
+                    if (!eixo) return;
+
+                    if (!dictProjEixos[projNome]) dictProjEixos[projNome] = [];
+                    dictProjEixos[projNome].push(eixo);
+                });
+
+                // --- 5.3 Faz o "Join" Master (Municípios -> Projetos -> Eixos) ---
+                // aqui houve o uso de sets pra evitar repetições. antes tava dando um erro que apareciam vários eixos "fantasma"
+                dataComp.forEach(row => {
+                    if (row.length < 4 || !row[2]) return;
+                    const projNome = normalizarString(row[0]);
+                    const cidadeStr = row[2].trim();
+                    const estadoRaw = normalizarString(row[3]);
+                    const ufSigla = estadoSiglas[estadoRaw] || 'CE';
+                    
+                    const cidId = formatarIdCidadeSvg(cidadeStr, ufSigla); 
+                    const cidNorm = normalizarString(cidadeStr);
+
+                    if (!mapDataAgregada[cidId]) {
+                        mapDataAgregada[cidId] = { 
+                            nome: cidadeStr, 
+                            eixosAgregados: {}, 
+                            projetosUnicos: new Set(),
+                            indicadores: dictIndicadores[cidNorm] || {} 
+                        };
+                    }
+
+                    // Adiciona o projeto no Set (ele ignora duplicatas automaticamente)
+                    mapDataAgregada[cidId].projetosUnicos.add(projNome);
+
+                    // Injeta os eixos que aquele projeto gerou na cidade
+                    const eixos = dictProjEixos[projNome] || [];
+                    eixos.forEach(eixo => {
+                        mapDataAgregada[cidId].eixosAgregados[eixo] = (mapDataAgregada[cidId].eixosAgregados[eixo] || 0) + 1;
+                    });
+                });
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-container').style.display = 'flex';
+
+                // legenda
+                const legendContainer = document.getElementById('map-legend');
+                Object.keys(coresEixos).forEach(eixoNorm => {
+                    const item = document.createElement('div');
+                    item.className = 'legend-item';
+                    item.innerHTML = `
+                        <div class="legend-icon-wrapper" style="background-color: ${coresEixos[eixoNorm]}">
+                            <i class="ti ${iconesEixos[eixoNorm] || 'ti-check'}"></i>
+                        </div>
+                        <span>${nomesAmigaveisEixos[eixoNorm] || eixoNorm}</span>
+                    `;
+                    legendContainer.appendChild(item);
+                });
+
+                // ==========================================
+                // 6. ADICIONA EVENTOS NO SVG DO MAPA
+                // ==========================================
+                const municipiosSvg = document.querySelectorAll('#map-section path[id], #map-section polygon[id], .municipio-alvo');
+                
+                municipiosSvg.forEach(municipio => {
+                    const id = municipio.getAttribute('id');
+                    const cityData = mapDataAgregada[id];
+
+                    if (!cityData || Object.keys(cityData.eixosAgregados).length === 0) {
+                        municipio.style.fill = '#f9f3f0'; // Cidades sem projeto = brancas
+                    } else {
+                        municipio.style.fill = '#c4b5fd'; // Cor primária (roxo bebê) ativada!
+                        municipio.classList.add('cidade-ativa');
+                        
+                        municipio.addEventListener('click', () => {
+                            if (selectedCityId) {
+                                const oldCity = document.getElementById(selectedCityId);
+                                if (oldCity) oldCity.classList.remove('cidade-selecionada');
+                            }
+
+                            selectedCityId = id;
+                            municipio.classList.add('cidade-selecionada');
+
+                            document.getElementById('info-panel').classList.add('show-panel');
+                            document.getElementById('panel-title').textContent = cityData.nome;
+                            
+                            renderizarBadges(cityData);
+                            
+                            const chartContainer = document.getElementById('pie-chart-container');
+                            chartContainer.innerHTML = '';
+                            chartContainer.appendChild(criarGraficoPizza(cityData.eixosAgregados, cityData.projetosUnicos.size));
+                            
+                            desenharLinha(municipio);
+                        });
+                    }
+                });
+
+                window.addEventListener('resize', () => {
+                    if (selectedCityId) {
+                        desenharLinha(document.getElementById(selectedCityId));
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                const loadingMsg = document.getElementById('loading');
+                loadingMsg.innerText = "Erro ao baixar os dados: " + err.message;
+                loadingMsg.style.color = "#dc2626";
+            }
+        }
+
+        function desenharLinha(cityElement) {
+            const container = document.getElementById('dashboard-container');
+            const panel = document.getElementById('info-panel');
+            const line = document.getElementById('dynamic-line');
+
+            const containerRect = container.getBoundingClientRect();
+            const cityRect = cityElement.getBoundingClientRect();
+            const panelRect = panel.getBoundingClientRect();
+
+            const startX = (cityRect.left - containerRect.left) + (cityRect.width / 2);
+            const startY = (cityRect.top - containerRect.top) + (cityRect.height / 2);
+            
+            const endX = panelRect.left - containerRect.left - 5;
+            const endY = (panelRect.top - containerRect.top) + (panelRect.height / 2);
+
+            line.setAttribute('x1', startX);
+            line.setAttribute('y1', startY);
+            line.setAttribute('x2', endX);
+            line.setAttribute('y2', endY);
+            line.style.display = 'block';
+        }
+
+        // tooltip
+        const chartTooltip = document.getElementById('chart-tooltip');
+
+        document.addEventListener('mouseover', (e) => {
+            const slice = e.target.closest('.slice-group');
+            if (slice) {
+                chartTooltip.textContent = slice.getAttribute('data-tooltip');
+                chartTooltip.style.opacity = '1';
+                chartTooltip.style.visibility = 'visible';
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (chartTooltip.style.visibility === 'visible') {
+                // segue o mouse +  offset
+                chartTooltip.style.left = (e.clientX + 15) + 'px';
+                chartTooltip.style.top = (e.clientY + 15) + 'px';
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.closest('.slice-group')) {
+                chartTooltip.style.opacity = '0';
+                chartTooltip.style.visibility = 'hidden';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', inicializarDashboard);
+    </script>
+</body>
+</html>
