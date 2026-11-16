@@ -7,7 +7,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Alegreya Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     
     <!-- PapaParse para ler os CSVs robustamente via Vanilla JS -->
@@ -45,7 +45,7 @@
        TEMA SASE - APRESENTAÇÃO (ROXO, LARANJA E CREME)
        ================================================== */
     body {
-        font-family: 'Alegreya Sans', sans-serif;
+        font-family: 'montserrat', sans-serif;
         /* Aplica o background da imagem fornecida */
         background-image: url('background.png');
         background-size: cover;
@@ -298,7 +298,7 @@
         padding: 4px 12px 4px 4px;
         border-radius: 999px; 
         border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);IDHM
     }
     .legend-item span {
         font-size: 9.5px; /* Reduzido para caber bem num projetor */
@@ -426,31 +426,31 @@
         const eixosParaIndicadores = {
             "educacao para a emancipacao": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
             "patrimonio cultural historico e natural": ['idhm'],
-            "saude coletiva": ['idhm', 'idhm_longevidade', 'ima_class'],
+            "saude coletiva": ['idhm', 'idhm_longevidade'],
             "popularizacao da ciencia": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
-            "desenvolvimento agrario": ['idhm', 'idhm_renda', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema'],
+            "desenvolvimento agrario": ['idhm', 'idhm_renda', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema', 'ima_class'],
             "meio ambiente e mudanca climatica": ['idhm', 'ima_class', 'idhm_longevidade'],
             "busca ativa": [],
             "primeira infancia e sistema de garantia de direitos": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
             "recomposicao das aprendizagens": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
-            "saude na escola": ['idhm_educacao', 'ideb_ai', 'ideb_af', 'ima_class'],
+            "saude na escola": ['idhm_educacao', 'ideb_ai', 'ideb_af'],
             "educacao de jovens e adultos eja de idosos e erradicacao do analfabetismo": ['idhm_educacao', 'ima_class', 'idhm_renda', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema'],
             "politicas de educacao integral em tempo integral": []
         };
 
         const indConfigs = {
-            'desemprego': { titulo: 'Desemprego', desc: 'Pop. ativa sem ocupação (%) (Censo 2010)' },
+            'desemprego': { titulo: 'Desemprego', desc: 'População economicamente ativa sem ocupação (%) (Censo 2010)' },
             'idhm': { titulo: 'IDHM', desc: 'Índice de Desen. Humano Municipal (2010)' },
             'idhm_renda': { titulo: 'IDHM Renda', desc: 'IDHM Renda (2010)' },
-            'idhm_educacao': { titulo: 'IDHM Educação', desc: 'IDHM Educação (2010)' },
-            'idhm_longevidade': { titulo: 'IDHM Longevidade', desc: 'IDHM Longevidade (2010)' },
-            'ideb_ai': { titulo: 'IDEB Anos Iniciais', desc: 'IDEB - AI (2023)' },
-            'ideb_af': { titulo: 'IDEB Anos Finais', desc: 'IDEB - AF (2023)' },
-            'vul_a_pobreza': { titulo: 'Vuln. Econômica', desc: 'Vulneráveis à pobreza (%) (2010)' },
-            'pobreza': { titulo: 'Pobreza', desc: 'Pobres (%) (2022)' },
-            'pobreza_extrema': { titulo: 'Pobreza Extr.', desc: 'Extremamente pobres (%) (2022)' },
-            'ima_class': { titulo: 'IMA', desc: 'Índice Municipal de Alerta (IPECE 2025)' }
-        };
+            'idhm_educacao': { titulo: 'IDHM Ed.', desc: 'IDHM Educação (2010)' },
+            'idhm_longevidade': { titulo: 'IDHM Long.', desc: 'IDHM Longevidade (2010)' },
+            'ideb_ai': { titulo: 'IDEB A. Iniciais', desc: 'IDEB - Anos Iniciais (2023)' },
+            'ideb_af': { titulo: 'IDEB A. Finais', desc: 'IDEB - Anos Finais (2023)' },
+            'vul_a_pobreza': { titulo: 'Vuln. Econômica', desc: 'Vulneráveis à pobreza (%) Parcela da população com renda domiciliar per capita até R$ 255,00 mensais; não corresponde ao Índice de Vulnerabilidade Social (IVS). (2010)' },
+            'pobreza': { titulo: 'Pobreza', desc: 'Pobres (%) Renda domiciliar per capita até R$ 606 mensais. (2022)' },
+            'pobreza_extrema': { titulo: 'Pobreza Extr.', desc: 'Extremamente pobres (%) Renda domiciliar per capita até R$ 303 mensais (2022)' },
+            'ima_class': { titulo: 'IMA', desc: 'Índice Municipal de Alerta Integra condições climáticas, pluviometria, recursos hídricos, perdas agrícolas e fatores socioeconômicos (IPECE 2025)' }
+        };  
 
         const estadoSiglas = {
             'ceará': 'CE'
@@ -626,7 +626,7 @@
                     text.setAttribute("y", lyImg + 12); // Puxa o texto mais pra cima
                     text.setAttribute("fill", pathColor);
                     text.setAttribute("font-size", "20");
-                    text.setAttribute("font-family", "Alegreya Sans");
+                    text.setAttribute("font-family", "montserrat");
                     text.setAttribute("font-weight", "700");
                     text.setAttribute("text-anchor", "middle");
                     text.setAttribute("dominant-baseline", "central");
@@ -642,7 +642,7 @@
                     text.setAttribute("y", ly);
                     text.setAttribute("fill", pathColor);
                     text.setAttribute("font-size", "22");
-                    text.setAttribute("font-family", "Alegreya Sans");
+                    text.setAttribute("font-family", "montserrat");
                     text.setAttribute("font-weight", "700");
                     text.setAttribute("text-anchor", "middle");
                     text.setAttribute("dominant-baseline", "central");
@@ -659,7 +659,7 @@
             textTotal.setAttribute("x", "0");
             textTotal.setAttribute("y", "-5");
             textTotal.setAttribute("font-size", "28");
-            textTotal.setAttribute("font-family", "Alegreya Sans");
+            textTotal.setAttribute("font-family", "montserrat");
             textTotal.setAttribute("font-weight", "700");
             textTotal.setAttribute("fill", "#1e293b");
             textTotal.setAttribute("text-anchor", "middle");
@@ -671,7 +671,7 @@
             textTotalLabel.setAttribute("x", "0");
             textTotalLabel.setAttribute("y", "20");
             textTotalLabel.setAttribute("font-size", "11");
-            textTotalLabel.setAttribute("font-family", "Alegreya Sans");
+            textTotalLabel.setAttribute("font-family", "montserrat");
             textTotalLabel.setAttribute("font-weight", "600");
             textTotalLabel.setAttribute("fill", "#64748b");
             textTotalLabel.setAttribute("text-anchor", "middle");
@@ -761,14 +761,16 @@
                         };
                     }
 
-                    // Adiciona o projeto no Set (ele ignora duplicatas automaticamente)
-                    mapDataAgregada[cidId].projetosUnicos.add(projNome);
+                    // só incrementamos os eixos se o projeto ainda NÃO estiver registrado nessa cidade!
+                    if (!mapDataAgregada[cidId].projetosUnicos.has(projNome)) {
+                        
+                        mapDataAgregada[cidId].projetosUnicos.add(projNome);
 
-                    // Injeta os eixos que aquele projeto gerou na cidade
-                    const eixos = dictProjEixos[projNome] || [];
-                    eixos.forEach(eixo => {
-                        mapDataAgregada[cidId].eixosAgregados[eixo] = (mapDataAgregada[cidId].eixosAgregados[eixo] || 0) + 1;
-                    });
+                        const eixos = dictProjEixos[projNome] || [];
+                        eixos.forEach(eixo => {
+                            mapDataAgregada[cidId].eixosAgregados[eixo] = (mapDataAgregada[cidId].eixosAgregados[eixo] || 0) + 1;
+                        });
+                    }
                 });
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dashboard-container').style.display = 'flex';
