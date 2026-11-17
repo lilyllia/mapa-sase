@@ -7,7 +7,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     
     <!-- PapaParse para ler os CSVs robustamente via Vanilla JS -->
@@ -45,14 +45,13 @@
        TEMA SASE - APRESENTAÇÃO (ROXO, LARANJA E CREME)
        ================================================== */
     body {
-        font-family: 'montserrat', sans-serif;
+        font-family: 'Montserrat', sans-serif;
         /* Aplica o background da imagem fornecida */
         background-image: url('background.png');
         background-size: cover;
         background-position: center;
         background-attachment: fixed; /* O fundo não rola junto com a tela */
-        margin: 0;
-        padding: 10px 20px; /* Reduzido para caber melhor na tela */
+        margin: 0;/* Reduzido para caber melhor na tela */
         color: #1e293b;
         height: 100vh;
         box-sizing: border-box;
@@ -74,7 +73,7 @@
     .dashboard-container {
         display: flex;
         position: relative;
-        max-width: 1050px; /* Diminuído para caber 100% na altura da tela */
+        max-width: 1100px; /* Diminuído para caber 100% na altura da tela */
         margin: 0 auto;
         gap: 30px; /* Espaço menor entre mapa e card */
         align-items: flex-start;
@@ -143,16 +142,15 @@
         transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Curva de aceleração super suave */
     }
 
-    /* Classe ativadora do card via JS */
     .panel-section.show-panel {
         opacity: 1;
         visibility: visible;
-        transform: translateX(0); /* Desliza para o lugar original */
+        transform: translateX(0);
     }
 
     .panel-title {
         font-weight: 800;
-        font-size: 24px; /* Levemente menor */
+        font-size: 24px;
         margin-top: 0;
         margin-bottom: 15px;
         text-transform: uppercase;
@@ -168,7 +166,6 @@
         margin-top: 5px;
     }
 
-    /* Gráfico 3D Hover */
     .slice-group {
         cursor: pointer;
     }
@@ -180,21 +177,34 @@
     }
 
     /* ================================
-       BADGES DE INDICADORES
+       BADGES DE INDICADORES (RAIAS)
        ================================ */
     .badges-container {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px; /* Menos espaço entre badges */
-        justify-content: center;
-        margin-bottom: 10px;
+        flex-direction: column;
+        gap: 12px;
         width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed #cbd5e1;
+    }
+    
+    .badge-row:last-child {
+        border-bottom: none;
     }
 
     .badge {
         padding: 5px 12px;
         border-radius: 9999px;
-        font-size: 10px; /* Menor para caber mais */
+        font-size: 10px;
         font-weight: 700;
         color: white;
         cursor: help;
@@ -204,9 +214,11 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
 
-    .badge-amarelo { background-color: #f59e0b; color: #fff; } /* Amarelo mais próximo do laranja do PDF */
-    .badge-vermelho { background-color: #ef4444; }
-    .badge-vermelho-escuro { background-color: #7f1d1d; }
+    .badge-vermelho-escuro { background-color: #7f1d1d; color: #fff; } /* muito ruim */
+    .badge-vermelho { background-color: #ef4444; color: #fff; } /* ruim */
+    .badge-laranja { background-color: #f97316; color: #fff; } /* razoável */
+    .badge-amarelo { background-color: #eab308; color: #422006; } /* bom */
+    .badge-verde { background-color: #84cc16; color: #fff; } /* muito bom */
 
     /* Tooltip Flutuante (Badges) */
     .badge::after {
@@ -215,7 +227,7 @@
         bottom: 125%;
         left: 50%;
         transform: translateX(-50%);
-        background-color: #4A148C; /* Roxo SASE */
+        background-color: #4A148C; 
         color: white;
         padding: 8px 12px;
         border-radius: 6px;
@@ -298,7 +310,7 @@
         padding: 4px 12px 4px 4px;
         border-radius: 999px; 
         border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);IDHM
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .legend-item span {
         font-size: 9.5px; /* Reduzido para caber bem num projetor */
@@ -530,7 +542,7 @@
                 
                 const badge = document.createElement('div');
                 badge.className = `badge ${calcularCorBadge(chave, valor, cidadeData.indicadores['ima_class'])}`;
-                badge.textContent = indConfigs[chave].titulo;
+                badge.textContent = `${indConfigs[chave].titulo}: ${valor}`;
                 
                 let tooltip = `${formatarExibicao(chave, valor)}\n${indConfigs[chave].desc}`;
                 if (chave === 'ima_class') {
@@ -546,9 +558,10 @@
         // 4. GRÁFICO DE PIZZA (SVG MATEMÁTICO PURO)
         // ==========================================
         function criarGraficoPizza(eixosData, totalDeProjetos) {
-            const total = Object.values(eixosData).reduce((a, b) => a + b, 0);
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            // "totalPessoas" é a soma de todos os beneficiados na cidade por todos os eixos
+            const totalPessoas = Object.values(eixosData).reduce((a, b) => a + b, 0);
             
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.setAttribute("viewBox", "-160 -160 320 320"); 
             svg.style.width = "300px";
             svg.style.height = "300px";
@@ -558,7 +571,17 @@
             const raio = 78;
             const strokeW = 27;
             
-            const fatias = Object.entries(eixosData).map(([area, count]) => ({ area, count }));
+            const fatias = Object.entries(eixosData).map(([area, pessoasCount]) => {
+                const porcentagemReal = (pessoasCount / totalPessoas) * 100;
+                const porcentagemVisual = Math.round(porcentagemReal); // Arredonda pra tela
+                textoPorcentagem = porcentagemVisual;
+                if (porcentagemVisual === 0 && pessoasCount > 0) {
+                    textoPorcentagem = '1';
+                }
+
+                return { area, pessoasCount, textoPorcentagem, porcentagemReal };
+            });
+
             const gapFisico = strokeW + 4;
             const gapAngle = fatias.length > 1 ? gapFisico / raio : 0;
             
@@ -566,7 +589,7 @@
             if (availableAngle < 0) availableAngle = 0; 
 
             fatias.forEach((fatia) => {
-                let drawAngle = (fatia.count / total) * availableAngle;
+                let drawAngle = (fatia.porcentagemReal / 100) * availableAngle;
                 if (drawAngle <= 0.001) drawAngle = 0.001; 
                 const endAngle = startAngle + drawAngle;
                 const pathColor = coresEixos[fatia.area] || '#64748b';
@@ -575,9 +598,9 @@
                 sliceGroup.setAttribute("class", "slice-group");
                 
                 const nomeAmigavel = nomesAmigaveisEixos[fatia.area] || fatia.area.toUpperCase();
-                sliceGroup.setAttribute("data-tooltip", `${nomeAmigavel}\n${fatia.count} ocorrência(s) em projetos`);
+                sliceGroup.setAttribute("data-tooltip", `${nomeAmigavel}\n`);
 
-                if (fatia.count === total && fatias.length === 1) {
+                if (totalPessoas > 0 && fatias.length === 1) {
                     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     circle.setAttribute("r", raio);
                     circle.setAttribute("fill", "none");
@@ -614,8 +637,7 @@
 
                     const foreign = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
                     foreign.setAttribute("x", lxImg - imgSize / 2);
-                    // 3. Juntamos o Ícone e o Número (Ajuste nos eixos Y)
-                    foreign.setAttribute("y", lyImg - imgSize / 2 - 8); // Puxa o ícone mais pra baixo
+                    foreign.setAttribute("y", lyImg - imgSize / 2 - 8); 
                     foreign.setAttribute("width", imgSize);
                     foreign.setAttribute("height", imgSize);
                     foreign.innerHTML = `<i class="ti ${iconesEixos[fatia.area]}" style="font-size: ${imgSize}px; color: ${pathColor}; display: block; text-align: center;"></i>`;
@@ -623,14 +645,14 @@
                     
                     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                     text.setAttribute("x", lxImg);
-                    text.setAttribute("y", lyImg + 12); // Puxa o texto mais pra cima
+                    text.setAttribute("y", lyImg + 14); 
                     text.setAttribute("fill", pathColor);
-                    text.setAttribute("font-size", "20");
+                    text.setAttribute("font-size", "17");
                     text.setAttribute("font-family", "montserrat");
                     text.setAttribute("font-weight", "700");
                     text.setAttribute("text-anchor", "middle");
                     text.setAttribute("dominant-baseline", "central");
-                    text.textContent = fatia.count; 
+                    text.textContent = `${fatia.textoPorcentagem}%`; 
                     sliceGroup.appendChild(text);
 
                 } else {
@@ -641,12 +663,12 @@
                     text.setAttribute("x", lx);
                     text.setAttribute("y", ly);
                     text.setAttribute("fill", pathColor);
-                    text.setAttribute("font-size", "22");
+                    text.setAttribute("font-size", "19");
                     text.setAttribute("font-family", "montserrat");
                     text.setAttribute("font-weight", "700");
                     text.setAttribute("text-anchor", "middle");
                     text.setAttribute("dominant-baseline", "central");
-                    text.textContent = fatia.count; 
+                    text.textContent = `${fatia.porcentagemVisual}%`; 
                     sliceGroup.appendChild(text);
                 }
                 
@@ -682,20 +704,118 @@
             return svg;
         }
         // ==========================================
-        // 5. DOWNLOAD DOS DADOS E LIGAÇÃO (JOINS)
+        // LINKS DOS DADOS
         // ==========================================
         const LINK_INDICADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRrICKzX1B24JlnMdgMRrX6FpMNuA0E58gj0RFBmH6EmCb--xqAl1armqucfXVAdzJQQ3x4OVWC-EQK/pub?gid=2081621981&single=true&output=csv';
+        const LINK_CLASSIFICACOES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRrICKzX1B24JlnMdgMRrX6FpMNuA0E58gj0RFBmH6EmCb--xqAl1armqucfXVAdzJQQ3x4OVWC-EQK/pub?gid=73287328&single=true&output=csv';
+
         const LINK_PROJETOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRZ9nok-C90ziQe0XrbSsEt497sl87Q5AijSFsknilRPRIiFRkhATGuk7bVLHOBI1KATeN0_z5148h2/pub?gid=286471846&single=true&output=csv';
         const LINK_COMPILADO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQyMQ9edM-5tVfvLnH0ifGqgB9a6qX8H0ko69iDPGCfIomC0v9fIo5t8-wXB5te5ryMDT-KOMlfv3Sc/pub?gid=621770612&single=true&output=csv';
-        const LINK_MAPA_SVG = './mapa.svg';
+        const LINK_BENEFICIADOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQyMQ9edM-5tVfvLnH0ifGqgB9a6qX8H0ko69iDPGCfIomC0v9fIo5t8-wXB5te5ryMDT-KOMlfv3Sc/pub?gid=358660265&single=true&output=csv';
+
+        const LINK_MAPA_SVG = './mapa.svg'; 
+
+        // ==========================================
+        // LÓGICA DE CLASSIFICAÇÃO
+        // ==========================================
+        const mapaMelhorMaior = {
+            'baixa': { texto: 'Muito Ruim', cor: 'badge-vermelho-escuro' },
+            'baixo': { texto: 'Muito Ruim', cor: 'badge-vermelho-escuro' },
+            'media-baixa': { texto: 'Ruim', cor: 'badge-vermelho' },
+            'medio-baixo': { texto: 'Ruim', cor: 'badge-vermelho' },
+            'media': { texto: 'Razoável', cor: 'badge-laranja' },
+            'medio': { texto: 'Razoável', cor: 'badge-laranja' },
+            'media-alta': { texto: 'Bom', cor: 'badge-amarelo' },
+            'medio-alto': { texto: 'Bom', cor: 'badge-amarelo' },
+            'alta': { texto: 'Muito Bom', cor: 'badge-verde' },
+            'alto': { texto: 'Muito Bom', cor: 'badge-verde' }
+        };
+
+        const mapaMelhorMenor = {
+            'baixa': { texto: 'Muito Bom', cor: 'badge-verde' },
+            'baixo': { texto: 'Muito Bom', cor: 'badge-verde' },
+            'media-baixa': { texto: 'Bom', cor: 'badge-amarelo' },
+            'medio-baixo': { texto: 'Bom', cor: 'badge-amarelo' },
+            'media': { texto: 'Razoável', cor: 'badge-laranja' },
+            'medio': { texto: 'Razoável', cor: 'badge-laranja' },
+            'media-alta': { texto: 'Ruim', cor: 'badge-vermelho' },
+            'medio-alto': { texto: 'Ruim', cor: 'badge-vermelho' },
+            'alta': { texto: 'Muito Ruim', cor: 'badge-vermelho-escuro' },
+            'alto': { texto: 'Muito Ruim', cor: 'badge-vermelho-escuro' }
+        };
+
+        function processarClassificacao(chave, class_raw) {
+            if (!class_raw) return { texto: 'Sem Dados', cor: 'badge-cinza' };
+            
+            let normClass = normalizarString(class_raw).replace(' ', '-'); 
+            
+            const grupoMaior = ['ideb_ai', 'ideb_af', 'idhm', 'idhm_renda', 'idhm_educacao', 'idhm_longevidade', 'ima_class'];
+            
+            const dicionario = grupoMaior.includes(chave) ? mapaMelhorMaior : mapaMelhorMenor;
+            return dicionario[normClass] || { texto: class_raw, cor: 'badge-cinza' };
+        }
+
+        function formatarExibicao(chave, valor) {
+            if (['desemprego', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema'].includes(chave)) return valor.toFixed(2).replace('.', ',') + '%';
+            if (chave.startsWith('idhm') || chave === 'ima' || chave === 'ima_class') return valor.toFixed(3).replace('.', ',');
+            if (chave.startsWith('ideb')) return valor.toFixed(1).replace('.', ',');
+            return valor;
+        }
+
+        // raias
+        const gruposRaias = [
+            ['desemprego', 'vul_a_pobreza', 'pobreza', 'pobreza_extrema', 'idhm','idhm_renda'],
+            ['ideb_ai', 'ideb_af', 'idhm_educacao'],
+            ['ima_class'],
+            ['idhm_longevidade']
+        ];
+
+        function renderizarBadges(cidadeData) {
+            const container = document.getElementById('badges-container');
+            container.innerHTML = '';
+            
+            let chavesAtivas = new Set();
+            Object.keys(cidadeData.eixosAgregados).forEach(eixoStr => {
+                if (eixosParaIndicadores[eixoStr]) {
+                    eixosParaIndicadores[eixoStr].forEach(ind => chavesAtivas.add(ind));
+                }
+            });
+
+            // raiass
+            gruposRaias.forEach(grupo => {
+                // indicadores ativos, informados na planilha
+                const indAtivosNaRaia = grupo.filter(chave => chavesAtivas.has(chave) && cidadeData.indicadores[chave] && cidadeData.indicadores[chave].valor !== undefined);
+                
+                if (indAtivosNaRaia.length > 0) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'badge-row';
+                    
+                    indAtivosNaRaia.forEach(chave => {
+                        const info = cidadeData.indicadores[chave];
+                        const badge = document.createElement('div');
+                        badge.className = `badge ${info.cor}`;
+                        
+                        badge.textContent = `${indConfigs[chave].titulo}: ${formatarExibicao(chave, info.valor)}`;
+                        
+                        badge.setAttribute('data-tooltip', `Classificação: ${info.texto_class}`);
+                        
+                        rowDiv.appendChild(badge);
+                    });
+                    
+                    container.appendChild(rowDiv);
+                }
+            });
+        }
 
         async function inicializarDashboard() {
             try {
-                const [resSvg, resInd, resProj, resComp] = await Promise.all([
+                const [resSvg, resInd, resProj, resComp, resClass, resBene] = await Promise.all([
                     fetch(LINK_MAPA_SVG).then(r => r.text()),
                     fetch(LINK_INDICADORES).then(r => r.text()),
                     fetch(LINK_PROJETOS).then(r => r.text()),
-                    fetch(LINK_COMPILADO).then(r => r.text())
+                    fetch(LINK_COMPILADO).then(r => r.text()),
+                    fetch(LINK_CLASSIFICACOES).then(r => r.text()),
+                    fetch(LINK_BENEFICIADOS).then(r => r.text())
                 ]);
 
                 document.getElementById('map-container').innerHTML = resSvg;
@@ -703,45 +823,80 @@
                 const dataInd = Papa.parse(resInd, {header: false, skipEmptyLines: true}).data.slice(1);
                 const dataProj = Papa.parse(resProj, {header: false, skipEmptyLines: true}).data.slice(1);
                 const dataComp = Papa.parse(resComp, {header: false, skipEmptyLines: true}).data.slice(1);
+                const dataClass = Papa.parse(resClass, {header: false, skipEmptyLines: true}).data.slice(1);
+                const dataBene = Papa.parse(resBene, {header: false, skipEmptyLines: true}).data.slice(1);
 
-                // --- 5.1 Prepara Dicionário de Indicadores ---
+                // --- Classificações (Nova Planilha) ---
+                let dictClass = {};
+                dataClass.forEach(row => {
+                    if (row.length < 12 || !row[0]) return;
+                    const cidNorm = normalizarString(row[0]);
+                    
+                    dictClass[cidNorm] = {
+                        desemprego: row[1] || "",
+                        idhm: row[2] || "",
+                        ideb_ai: row[3] || "",
+                        ideb_af: row[4] || "",
+                        vul_a_pobreza: row[5] || "",
+                        ima_class: row[6] || "",
+                        pobreza: row[7] || "",
+                        pobreza_extrema: row[8] || "",
+                        idhm_renda: row[9] || "",
+                        idhm_educacao: row[10] || "",
+                        idhm_longevidade: row[11] || ""
+                    };
+                });
+
+                // --- 5.1 Dicionário de Indicadores  ---
                 let dictIndicadores = {};
                 dataInd.forEach(row => {
                     if (row.length < 12 || !row[0]) return;
                     const cidNorm = normalizarString(row[0]);
+                    const classesDaCidade = dictClass[cidNorm] || {};
+                    
+                    // Função ajudante que une o número ao processamento de cor
+                    const montarObj = (chave, valorStr, overrideClass = null) => {
+                        const valorNum = parseNumberBr(valorStr);
+                        const classRaw = overrideClass !== null ? overrideClass : (classesDaCidade[chave] || ""); 
+                        const proc = processarClassificacao(chave, classRaw);
+                        return { valor: valorNum, texto_class: proc.texto, cor: proc.cor };
+                    };
+
                     dictIndicadores[cidNorm] = {
-                        desemprego: parseNumberBr(row[1]),
-                        idhm: parseNumberBr(row[2]),
-                        ideb_ai: parseNumberBr(row[3]),
-                        ideb_af: parseNumberBr(row[4]),
-                        vul_a_pobreza: parseNumberBr(row[5]),
-                        ima: parseNumberBr(row[6]),
-                        ima_class: row[7] ? row[7].trim() : "",
-                        pobreza: parseNumberBr(row[8]),
-                        pobreza_extrema: parseNumberBr(row[9]),
-                        idhm_renda: parseNumberBr(row[10]),
-                        idhm_educacao: parseNumberBr(row[11]),
-                        idhm_longevidade: parseNumberBr(row[12])
+                        desemprego: montarObj('desemprego', row[1]),
+                        idhm: montarObj('idhm', row[2]),
+                        ideb_ai: montarObj('ideb_ai', row[3]),
+                        ideb_af: montarObj('ideb_af', row[4]),
+                        vul_a_pobreza: montarObj('vul_a_pobreza', row[5]),
+                        ima_class: montarObj('ima_class', row[6], row[7]), // Puxa valor da col 6 e classe da col 7
+                        pobreza: montarObj('pobreza', row[8]), // <-- Pobreza corrigida para a col 8!
+                        pobreza_extrema: montarObj('pobreza_extrema', row[9]), // Corrigida para a col 9!
+                        idhm_renda: montarObj('idhm_renda', row[10]), // Corrigida para a col 10!
+                        idhm_educacao: montarObj('idhm_educacao', row[11]), // Corrigida para a col 11!
+                        idhm_longevidade: montarObj('idhm_longevidade', row[12]) // Corrigida para a col 12!
                     };
                 });
 
-                // --- 5.2 Prepara Dicionário de Eixos por Projeto ---
+                // --- 5.2 Prepara Dicionário de Eixos e Beneficiados por Projeto ---
                 let dictProjEixos = {};
-                dataProj.forEach(row => {
-                    // se a coluna do eixo não existir ou estiver vazia, ele ignora a linha!
-                    if (row.length < 2 || !row[0] || !row[1] || row[1].trim() === '') return; 
+                
+                // nova logica: projeto -> eixo -> beneficiados
+                dataBene.forEach(row => {
+                    // col. 0 proj. col. 1 eixo col 3 beneficiados
+                    if (row.length < 4 || !row[0] || !row[1] || row[1].trim() === '') return; 
                     
                     const projNome = normalizarString(row[0]);
                     const eixo = normalizarString(row[1]);
+                    const beneficiados = parseInt(row[3]) || 0;
                     
                     if (!eixo) return;
 
-                    if (!dictProjEixos[projNome]) dictProjEixos[projNome] = [];
-                    dictProjEixos[projNome].push(eixo);
+                    if (!dictProjEixos[projNome]) dictProjEixos[projNome] = {};
+                    
+                    dictProjEixos[projNome][eixo] = beneficiados; 
                 });
 
                 // --- 5.3 Faz o "Join" Master (Municípios -> Projetos -> Eixos) ---
-                // aqui houve o uso de sets pra evitar repetições. antes tava dando um erro que apareciam vários eixos "fantasma"
                 dataComp.forEach(row => {
                     if (row.length < 4 || !row[2]) return;
                     const projNome = normalizarString(row[0]);
@@ -755,7 +910,7 @@
                     if (!mapDataAgregada[cidId]) {
                         mapDataAgregada[cidId] = { 
                             nome: cidadeStr, 
-                            eixosAgregados: {}, 
+                            eixosAgregados: {},
                             projetosUnicos: new Set(),
                             indicadores: dictIndicadores[cidNorm] || {} 
                         };
@@ -766,9 +921,12 @@
                         
                         mapDataAgregada[cidId].projetosUnicos.add(projNome);
 
-                        const eixos = dictProjEixos[projNome] || [];
-                        eixos.forEach(eixo => {
-                            mapDataAgregada[cidId].eixosAgregados[eixo] = (mapDataAgregada[cidId].eixosAgregados[eixo] || 0) + 1;
+                        const eixosDoProjeto = dictProjEixos[projNome] || {};
+                        
+                        Object.keys(eixosDoProjeto).forEach(eixo => {
+                            const pessoasAtingidas = eixosDoProjeto[eixo];
+                            // somar caso sejam eixos iguas
+                            mapDataAgregada[cidId].eixosAgregados[eixo] = (mapDataAgregada[cidId].eixosAgregados[eixo] || 0) + pessoasAtingidas;
                         });
                     }
                 });
@@ -799,9 +957,9 @@
                     const cityData = mapDataAgregada[id];
 
                     if (!cityData || Object.keys(cityData.eixosAgregados).length === 0) {
-                        municipio.style.fill = '#f9f3f0'; // Cidades sem projeto = brancas
+                        municipio.style.fill = '#f9f3f0';
                     } else {
-                        municipio.style.fill = '#c4b5fd'; // Cor primária (roxo bebê) ativada!
+                        municipio.style.fill = '#c4b5fd';
                         municipio.classList.add('cidade-ativa');
                         
                         municipio.addEventListener('click', () => {
